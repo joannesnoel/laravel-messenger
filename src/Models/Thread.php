@@ -327,12 +327,23 @@ class Thread extends Eloquent
         $usersTable = Models::table('users');
         $userPrimaryKey = Models::user()->getKeyName();
 
-        $selectString = $this->createSelectString($columns);
+        //$selectString = $this->createSelectString($columns);
+        //print_r($selectString); exit;
 
-        $participantNames = $this->getConnection()->table($usersTable)
+        $participants = $this->getConnection()->table($usersTable)
             ->join($participantsTable, $usersTable . '.' . $userPrimaryKey, '=', $participantsTable . '.user_id')
             ->where($participantsTable . '.thread_id', $this->id)
-            ->select($this->getConnection()->raw($selectString));
+            ->select("$participantsTable.id");
+
+        $participantNames = collect([]);
+
+        foreach($participants->get() as $participant){
+            if($participant->id == $userId)
+                continue;
+            $participant = Models::participant()->find($participant->id);
+            $participantNames->push($participant->user);
+        }
+
 
         if ($userId !== null) {
             $participantNames->where($usersTable . '.' . $userPrimaryKey, '!=', $userId);
